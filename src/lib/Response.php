@@ -21,56 +21,30 @@ class Response
 
 	private $body;
 
-	public function __construct( $request )
+
+	public function getPackage( $package_name  )
 	{
-		if( !$request ) throw new Exception("Error No Request Object", 404);
-
-		$this->request = $request;
-
-		$this->request->connect();
-	}
-
-	public function getContext()
-	{
-
-		$this->socket = $this->request->getObject();
-
-		if( !$this->socket ) throw new \Exception("Error No Stream Socket Object", 404);
-
-		$this->request->write();
-		$this->context = stream_get_contents($this->socket);
-		$this->request->close();
-		$this->setHeader();
-		dump($this->context);
-		return $this->context;
-	}
-
-	public function getTar( $tar_name = '' )
-	{
-		$this->getContext();
 		Header( "Content-type:  application/octet-stream "); 
 		Header( "Accept-Ranges: ".strlen($this->body)."bytes "); 
-		Header( "Content-Disposition:attachment;filename={$tar_name}"); 
+		Header( "Content-Disposition:attachment;filename={$package_name}"); 
 		echo $this->body;
 		exit();
 	}
 
-	public function getResult()
+	public function getBody()
 	{
-		$this->getContext();
-		$result = json_decode($this->body,true);
-		dump($result);
+		return json_decode($this->body,true);
 	}
 
-	public function getStatus()
+	public function getCode()
 	{
-		$this->getContext();
 		return $this->http_code;
 	}
 
-	public function setHeader()
+
+	public function resolveRawData( $raw_data )
 	{
-		list($header, $body) = explode("\r\n\r\n", $this->context,2);
+		list($header, $body) = explode("\r\n\r\n", $raw_data,2);
 		$this->body = $body;
 		$header_array = explode( "\r" , $header );
  		list( $http_version , $http_code , $http_status ) = explode( " "  , $header_array[0] );
@@ -87,5 +61,6 @@ class Response
  			$this->header[$name] = trim($value);
  		}
 
+ 		return $this;
 	}
 }

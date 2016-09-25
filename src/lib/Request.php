@@ -5,137 +5,100 @@ namespace Docker\Lib;
 
 class Request
 {
-	private $socket;
-
 	private $method = 'GET';
-
-	private $header = [];
-
-	private $target;
-
-	private $socket_path;
-
-	private $timeout;
 
 	private $body;
 
-	private $raw_data;
+	private $stream_data;
 
-	public function __construct( $socket_path , $timeout='' )
+	private $url_path;
+
+	private $http_version = '1.0';
+
+	private $header = [
+		'Host'   => 'localhost',
+		'Accept' => '*/*'
+	];
+
+	public function setOption( $path , $query = [] , $params =[], $flag = true )
 	{
-		
-		if( empty($socket_path) ) throw new \Exception('Now Setting Socket Path');
+		$this->url_path = trim( $path ,'?' );
 
-		$socket_path  = str_replace( '\\' , '/', $socket_path);
-
-		$this->socket_path  = 'unix:///'.trim( trim( $socket_path , 'unix:' ) , '/' );
-		
-		$timeout = ini_get('default_socket_timeout');
-
-		if( !empty( $timeout ) ){
-			$timeout = $timeout;
+		if( count($query) > 0  ){
+			$query_string = http_build_query($query);
+			$this->url_path .= '?'.$query_string;
 		}
 
-		$this->timeout = $timeout;
-		
-	}
+		if( count($params) > 0 ){
+			if( $flag ){
+				$body = str_replace('[]', '{}',json_encode($params,JSON_UNESCAPED_SLASHES));
 
-	public function connect(){
-		$this->socket = @stream_socket_client( $this->socket_path, $errno, $errstr, $this->timeout,  STREAM_CLIENT_ASYNC_CONNECT|STREAM_CLIENT_CONNECT );
-		
-		if( $errno != 0 ){
-			throw new \Exception('Socket Error Info:'.$errstr);
+				$this->setHeader([
+					'Content-Type'   => 'application/json',
+					'Content-Length' =>  strlen($body),
+					'Connection'     => 'close'
+				]);
+				
+				$this->body = $body;
+			}
 		}
 	}
 
-
-	public function setRequestHeader()
+	public function getBody()
 	{
-		$message = vsprintf('%s %s HTTP/1.0', [
+		$request_header = $this->getHeaders();
+		if( !empty($this->body) ){
+			return $request_header.$this->body;
+		}
+		return $request_header;
+	}
+
+	public function getHeaders()
+	{
+		$request_header = vsprintf('%s %s HTTP/%s', [
             strtoupper($this->method),
-            $this->target,
+            $this->url_path,
+            $this->http_version
         ])."\r\n";
 
-        foreach ($this->getHeaders() as $name => $values) {
-            $message .= $name.': '.$values."\r\n";
+        foreach ($this->header as $name => $value) {
+        	$request_header .= $name.': '.$value."\r\n";
         }
 
-        $message .= "\r\n";
+        $request_header .= "\r\n";
 
-        return $message;
+        return $request_header;
 	}
 
-	public function write($data ="")
+
+	public function setMethod( $method )
 	{
-		$stream_data = $this->setRequestHeader();
-		fwrite($this->socket, $stream_data);
-		if( $this->method == 'POST' && !empty( $this->raw_data ) ){
-			fwrite($this->socket, $this->raw_data);
+		if( !is_array($method) ){
+			$method[0] = $method;
 		}
-		
+
+		$this->method = $method[0];
 	}
 
-	public function setTarget( $path,$query = [] )
-	{
-		if( $this->method != 'POST' ){
-			$this->target = trim( $path ,'?' );
 
-			if( count($query) != 0 ){
-				$query_string = http_build_query($query);
-				$this->target .= '?'.$query_string;
+	public function setHeader( $options = [] )
+	{
+		if( count($options) > 0 ){
+			foreach ($options as $name => $value) {
+				$this->header[$name] = $value;
 			}
-		}else if( $this->method == 'PUT' ){
-
-		}else{
-			$this->target = trim( $path ,'?' );
-			$data = json_encode($query,JSON_UNESCAPED_SLASHES);
-			$this->setHeader('Content-Length',strlen($data));
-			$this->raw_data = str_replace('[]', '{}', $data);
-		}
-		
-	}
-
-	public function setMethod( $method = '' )
-	{
-		$this->method = $method;
-	}
-
-	public function getHeaders(){
-		
-		if( empty($this->header['Host']) ){
-			$this->header['Host'] = 'localhost';
-		}
-		
-		if( empty($this->header['Accept']) ){
-			$this->header['Accept'] = ' */*';
-		}
-
-		return $this->header;
-	}
-
-	public function setDefault( $name,$value )
-	{
-		if( isset($this->{$name}) ){
-			$this->{$name} = $value;
 		}
 	}
 
-	public function setHeader( $name,$value )
+	public function clearHeader( $flag = true )
 	{
-
-		$this->header[$name] = $value;
-	}
-
-	public function getObject()
-	{
-		if( $this->socket ){
-			return $this->socket;
+		$this->header = [];
+		if( $flag ){
+			$this->header = [
+				'Host'   => 'localhost',
+				'Accept' => '*/*'
+			];
 		}
-		return false;
 	}
 
-	public function close()
-	{
-		fclose($this->socket);
-	}
 }
