@@ -1,6 +1,7 @@
 {
     "name": "widuu/docker",
     "description": "Docker PHP SDK",
+    "keywords": ["docker", "php docker"],
     "authors": [
         {
             "name": "widuu",
@@ -14,7 +15,7 @@
     },
     "autoload": {
         "psr-4": {
-          "Docker\\": "src/"
+          "widuu\\Docker\\": "src/"
         }
     }
 }
