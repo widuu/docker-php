@@ -56,18 +56,18 @@ class Request
 	public function getHeaders()
 	{
 		$request_header = vsprintf('%s %s HTTP/%s', [
-            strtoupper($this->method),
-            $this->url_path,
-            $this->http_version
-        ])."\r\n";
+        	strtoupper($this->method),
+       		$this->url_path,
+        	$this->http_version
+    	])."\r\n";
 
-        foreach ($this->header as $name => $value) {
-        	$request_header .= $name.': '.$value."\r\n";
-        }
+    	foreach ($this->header as $name => $value) {
+    		$request_header .= $name.': '.$value."\r\n";
+    	}
 
-        $request_header .= "\r\n";
+    	$request_header .= "\r\n";
 
-        return $request_header;
+    	return $request_header;
 	}
 
 
