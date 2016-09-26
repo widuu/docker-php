@@ -28,7 +28,6 @@ class Response
 		Header( "Accept-Ranges: ".strlen($this->body)."bytes "); 
 		Header( "Content-Disposition:attachment;filename={$package_name}"); 
 		echo $this->body;
-		exit();
 	}
 
 	public function getBody()
@@ -41,6 +40,10 @@ class Response
 		return $this->http_code;
 	}
 
+	public function getHeader()
+	{
+		return $this->header;
+	}
 
 	public function resolveRawData( $raw_data )
 	{

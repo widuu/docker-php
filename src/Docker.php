@@ -62,10 +62,39 @@ class Docker
 	 *						 	500 – server error
 	 */
 
-	public function manageContainer( $method = "" ,$id = "",$time = 0 )
+	public function manageContainer( $method = "" ,$container_id = "",$time = 0 )
 	{
 		$this->dispather->setDefault('method',['POST']);
-		$raw_data = $this->dispather->setOption( '/containers/'.$id.'/'.$method.'?t='.$time );
+		$raw_data = $this->dispather->setOption( '/containers/'.$container_id.'/'.$method.'?t='.$time );
+		return $this->dispather->getCode( $raw_data );
+	}
+
+	public function pullArchiveContainer( $container_id, $container_path , $package_name='docker.tar.gz' )
+	{
+		$this->dispather->setDefault('method',['GET']);
+		$raw_data = $this->dispather->setOption( '/containers/'.$container_id.'/archive',['path'=>$container_path] );
+		$this->dispather->getPackage( $package_name );
+		// $return = $this->dispather->getHeader( 'X-Docker-Container-Path-Stat' );
+		// return json_decode(base64_decode($return),true);
+	}
+
+	public function pushArchiveContainer( $container_id  , $container_path , $filepath )
+	{
+		$this->dispather->setDefault('method',['PUT']);
+		$this->dispather->setFileStream($filepath);
+		$raw_data = $this->dispather->setOption( '/containers/'.$container_id.'/archive',['path'=>$container_path] );
+		return $this->dispather->getCode( $raw_data );
+	}
+
+	public function buildImage( $filepath ,  $query=[] , $registry_config = [] )
+	{
+		$this->dispather->setDefault('method','POST');
+		if( count($registry_config) > 0 ){
+			$config = base64_encode(json_encode($registry_config));
+			$this->request->setHeader([ 'X-Registry-Config' => $config ]);
+		}
+		$this->dispather->setFileStream($filepath);
+		$raw_data = $this->dispather->setOption( '/build', $query);
 		return $this->dispather->getCode( $raw_data );
 	}
 
@@ -76,9 +105,9 @@ class Docker
 		return $this->dispather->getBody( $raw_data );
 	}
 
-	public function setDebug( $open = true,$file_path = '' )
+	public function setDebug( $open = true,$filepath = '' )
 	{
-		$this->dispather->setDebug($open,$file_path);
+		$this->dispather->setDebug($open,$filepath);
 	}
 
 

@@ -74,6 +74,30 @@ class Dispather
 		return $this;
 	}
 
+	public function setFileStream($filepath)
+	{
+		if( !file_exists($filepath) || !is_writable($filepath) ){
+			throw new \Exception("File Not Exists Or File Not Writeable", 404);
+		}
+
+		$file_stream = '';
+
+		$fp = fopen($filepath, 'rb');
+		while( !feof($fp) ){
+		    $file_stream .= fgets($fp,200);
+		}
+
+		fclose($fp);
+
+		$this->request->setHeader([
+			'Content-Type'   => 'application/json',
+			'Content-Length' =>  strlen($file_stream),
+			'Connection'     => 'close'
+		]);
+
+		$this->request->setBody($file_stream);
+	}
+
 	public function getContext()
 	{
 		$this->socket->connect()->writeStream($this->request);
@@ -98,14 +122,29 @@ class Dispather
 	public function getPackage( $package_name = '' )
 	{
 		if( empty($package_name) ) $package_name  = 'docker.tar.gz';
-		return $this->getResolveRawData()->getPackage($package_name);
+		$this->getResolveRawData()->getPackage($package_name);
+	}
+
+	public function getHeader( $name = '' )
+	{
+		$name = str_replace( '-' , '_' , strtolower($name) );
+		$header = $this->getResolveRawData()->getHeader();
+		if( !empty($name) && isset($header[$name]) ){
+			return $header[$name];
+		}
+		return $header;
 	}
 
 	private function getResolveRawData( $raw_data = '' )
 	{
 		if( empty($raw_data) ){
-			$raw_data = $this->getContext();
+			if( empty($this->socket->getContext) ){
+				$raw_data = $this->getContext();
+			}else{
+				$raw_data = $this->socket->getContext();
+			}
 		}
+		
 		if( $this->debug ){
 			if( strlen($raw_data) > 102400 ){
 				$raw_data_log = 'STREAM FILE';

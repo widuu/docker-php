@@ -97,8 +97,18 @@ class Socket
 
 	public function read()
 	{
+		$meta_data = stream_get_meta_data($this->socket);
+		if( isset($meta_data['timeout']) && $meta_data['timeout'] ){
+			throw new Exception("Socket Read timeout", 1);
+			$this->close();
+		}
 		$this->context = stream_get_contents($this->socket);
 		$this->close();
+		return $this->context;
+	}
+
+	public function getContext()
+	{
 		return $this->context;
 	}
 

@@ -73,11 +73,13 @@ class Request
 
 	public function setMethod( $method )
 	{
+		$method_array = [];
 		if( !is_array($method) ){
-			$method[0] = $method;
+			$method_array[]  = $method;
+		}else{
+			$method_array[0] = $method[0]; 
 		}
-
-		$this->method = $method[0];
+		$this->method = $method_array[0];
 	}
 
 
@@ -88,6 +90,10 @@ class Request
 				$this->header[$name] = $value;
 			}
 		}
+	}
+
+	public function setBody( $body ){
+		$this->body = $body;
 	}
 
 	public function clearHeader( $flag = true )
