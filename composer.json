@@ -1,5 +1,5 @@
 {
-    "name": "widuu/docker",
+    "name": "widuu/docker-php",
     "description": "Docker PHP SDK",
     "keywords": ["docker", "php docker"],
     "authors": [
