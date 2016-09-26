@@ -2,10 +2,10 @@
 
 namespace Docker;
 
-use Docker\Lib\Response;
-use Docker\Lib\Request;
-use Docker\Lib\Socket;
-use Docker\Lib\Log;
+use widuu\Docker\Lib\Response;
+use widuu\Docker\Lib\Request;
+use widuu\Docker\Lib\Socket;
+use widuu\Docker\Lib\Log;
 
 class Dispather
 {

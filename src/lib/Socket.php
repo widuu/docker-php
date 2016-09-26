@@ -1,6 +1,6 @@
 <?php
 
-namespace Docker\Lib;
+namespace widuu\Docker\Lib;
 
 class Socket
 {

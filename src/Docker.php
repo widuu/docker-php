@@ -2,7 +2,7 @@
 
 namespace Docker;
 
-use Docker\Lib\Socket;
+use widuu\Docker\Lib\Socket;
 
 class Docker
 {
