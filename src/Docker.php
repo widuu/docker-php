@@ -91,7 +91,7 @@ class Docker
 		$this->dispather->setDefault('method','POST');
 		if( count($registry_config) > 0 ){
 			$config = base64_encode(json_encode($registry_config));
-			$this->request->setHeader([ 'X-Registry-Config' => $config ]);
+			$this->dispather->setHeader([ 'X-Registry-Config' => $config ]);
 		}
 		$this->dispather->setFileStream($filepath);
 		$raw_data = $this->dispather->setOption( '/build', $query);

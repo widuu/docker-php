@@ -98,6 +98,11 @@ class Dispather
 		$this->request->setBody($file_stream);
 	}
 
+	public function setHeader($params)
+	{
+		$this->request->setHeader($params);
+	}
+
 	public function getContext()
 	{
 		$this->socket->connect()->writeStream($this->request);
