@@ -18,6 +18,7 @@ class Docker
 	 */
 
 	private $config = [
+		'type'		  => 'unix',
 		'socket_path' => '/var/run/docker.sock',
 		'timeout'     => null
 	];
@@ -106,7 +107,7 @@ class Docker
 
 	public function removeImage( $image_name = '' )
 	{
-		$this->dispather->setDefault('method',['DELETE']);
+		$this->dispather->setDefault('method','DELETE');
 		$raw_data = $this->dispather->setOption( '/images/'.$image_name );
 		return $this->dispather->getBody( $raw_data );
 	}
