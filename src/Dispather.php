@@ -1,6 +1,6 @@
 <?php
 
-namespace Docker;
+namespace widuu\Docker;
 
 use widuu\Docker\Lib\Response;
 use widuu\Docker\Lib\Request;
