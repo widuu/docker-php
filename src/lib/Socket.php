@@ -35,11 +35,18 @@ class Socket
 
 		$socket_path  = str_replace( '\\' , '/', $config['socket_path']);
 
-		$this->socket_path  = 'unix:///'.trim( trim( $socket_path , 'unix:' ) , '/' );
+		if( $config['type'] == 'unix' ){
+			$this->socket_path = 'unix:///'.trim( $socket_path,'/' );
+		}else if( $config['type'] == 'tcp' ){
+			$this->socket_path = 'tcp://'.trim( $socket_path,'/' ).'/';
+		}else{
+			throw new Exception("Socket Type Error", 401);
+		}
+
 		
 		$timeout = ini_get('default_socket_timeout');
 
-		if( !empty( $timeout ) ){
+		if( !empty( $config['timeout']) ){
 			$timeout = $config['timeout'];
 		}
 
@@ -48,7 +55,7 @@ class Socket
 
 	public function connect()
 	{
-		$this->socket = @stream_socket_client( $this->socket_path, $errno, $errstr, $this->timeout,  STREAM_CLIENT_ASYNC_CONNECT|STREAM_CLIENT_CONNECT );
+		$this->socket = @stream_socket_client( $this->socket_path, $errno, $errstr, $this->timeout, STREAM_CLIENT_CONNECT );
 		
 		if( $errno != 0 ){
 			throw new \Exception('Socket Error Info:'.$errstr);

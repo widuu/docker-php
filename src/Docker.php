@@ -86,6 +86,12 @@ class Docker
 		return $this->dispather->getCode( $raw_data );
 	}
 
+	public function listImage( $query = [] )
+	{
+		$raw_data = $this->dispather->setOption( '/images/json' , $query );
+		return $this->dispather->getBody( $raw_data );
+	}
+
 	public function buildImage( $filepath ,  $query=[] , $registry_config = [] )
 	{
 		$this->dispather->setDefault('method','POST');
