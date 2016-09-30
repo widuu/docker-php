@@ -8,15 +8,30 @@ use widuu\Docker\Factory\ResPonseInterface;
 
 class Socket implements SocketInterface
 {
+	/**
+	 * @var 打开的Socket流资源
+	 */
+
 	private $socket = null;
+
+	/**
+	 * @var 是否可读
+	 */
 
 	private $read   = false;
 
+	/**
+	 * @var 是否可写
+	 */
+
 	private $write  = false;
+
+	/**
+	 * @var 是否读完毕
+	 */
 
 	private $eof	= false;
 
-	private $type;
 	/**
 	 * socket 配置文件
 	 */
@@ -50,6 +65,12 @@ class Socket implements SocketInterface
 			'x+'=> true, 'c+' => true
 		]
 	];
+
+	/**
+	 * 实例化Socket类
+	 *
+	 * @param array $socketConfig 配置文件
+	 */
 
 	public function __construct( $socketConfig = [] )
 	{
@@ -100,7 +121,6 @@ class Socket implements SocketInterface
 		$this->getMetaData($socket);
 
 		$this->socket = $socket;
-		
 	}
 
 	/**
@@ -116,8 +136,6 @@ class Socket implements SocketInterface
 		}
 
 		$header = $request->getRequestHeader();
-
-
 	}
 
 	/**
@@ -140,17 +158,6 @@ class Socket implements SocketInterface
 	public function getContents()
 	{
 
-	}
-
-	/**
-     * 获取Stream 类型
-     *
-     * @return bool
-     */
-
-	public function getStreamType()
-	{
-		return $this->type;
 	}
 
 	/**
