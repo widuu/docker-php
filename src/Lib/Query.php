@@ -2,7 +2,7 @@
 
 namespace widuu\Docker\Lib;
 
-class Container
+class Query
 {
 	
 }

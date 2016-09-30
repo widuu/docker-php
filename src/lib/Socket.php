@@ -2,129 +2,227 @@
 
 namespace widuu\Docker\Lib;
 
-class Socket
+use widuu\Docker\Factory\SocketInterface;
+use widuu\Docker\Factory\RequestInterface;
+use widuu\Docker\Factory\ResPonseInterface;
+
+class Socket implements SocketInterface
 {
+	private $socket = null;
+
+	private $read   = false;
+
+	private $write  = false;
+
+	private $eof	= false;
+
+	private $type;
 	/**
-	 * unix Socket Path
+	 * socket 配置文件
 	 */
 
-	private $socket_path;
+	private $config = [
+		'stream_type'   => 'unix',
+		'remote_socket' => '/var/run/docker.sock',
+        'timeout' 		=> null,
+        'stream_context_options' => [
+        	'cafile'      => null,
+            'local_cert'  => null,
+            'local_pk'    => null,
+        ],
+        'ssl' => null,
+        'write_buffer_size' => 8192,
+        'ssl_method' => STREAM_CRYPTO_METHOD_TLS_CLIENT,
+	];
+
+	/**
+	 * 读写 mode 
+	 */
+
+	private static $readWrite = [
+		'write' => [
+			'w' => true, 'r+' => true, 'w+' => true, 'x'  => true,
+			'c' => true, 'a'  => true, 'a+' => true, 'c+' => true,
+			'x+'=> true
+		],
+		'read'  => [
+			'r' => true, 'r+' => true, 'w+' => true, 'a+' => true, 
+			'x+'=> true, 'c+' => true
+		]
+	];
+
+	public function __construct( $socketConfig = [] )
+	{
+		$this->parseConfig( $socketConfig );
+	}
+
+	/**
+	 * 创建 Socket Stream
+	 */
+
+	public function createSocket()
+	{
+		// 如果存在Socket存在，直接返回Socket
+		if( $this->socket != null && is_resource($this->socket) ) return $this->socket;
+		
+		$socketConfig = $this->config;
+
+		if( empty($socketConfig['stream_type']) || empty($socketConfig['remote_socket']) ){
+			throw new \Exception("Socket Type And Socket Remote is Null");
+		}
+
+		$separator = $socketConfig['stream_type'] == 'unix' ? 'unix:///' : 'tcp://';
+		$socketPath = $separator.trim($socketConfig['remote_socket'],'/');
+
+		$streamContext = [];
+		if( $socketConfig['ssl'] ){
+			$streamContext['ssl'] = [];
+			foreach( $socketConfig['stream_context_options'] as $name => $value ) {
+				if( !empty($value) ) $streamContext['ssl'][$name] = $value;
+			}
+		}
+
+		$errNo = null;
+        $errMsg = null;
+        // 配置超时时间
+        if( $socketConfig['timeout'] == null ) $timeout = ini_get('default_socket_timeout');
+        // 减少超时时间达到连接的作用
+        $socket = @stream_socket_client($socketPath, $errNo, $errMsg, $timeout / 1000, STREAM_CLIENT_CONNECT,stream_context_create($streamContext));
+
+		if( false === $socket ) throw new \Exception($errMsg, $errNo);
+
+		if( $socketConfig['ssl'] ){
+			if (false === @stream_socket_enable_crypto($socket, true, $this->config['ssl_method'])) {
+				throw new \Exception("Set SSL Type Error");
+			}
+		}
+
+		$this->getMetaData($socket);
+
+		$this->socket = $socket;
+		
+	}
+
+	/**
+     * 写入数据
+     *
+     * @return bool
+     */
+
+	public function writeReauest(RequestInterface $request)
+	{
+		if( !$request instanceof RequestInterface ){
+			throw new Exception("Request Not Instanceof RequestInterface");
+		}
+
+		$header = $request->getRequestHeader();
+
+
+	}
+
+	/**
+     * 读取数据
+     *
+     * @return bool
+     */
+
+	public function readResponse(ResponseInterface $response)
+	{
+
+	}
+
+	/**
+     * 获取数据内容
+     *
+     * @return bool
+     */
+
+	public function getContents()
+	{
+
+	}
+
+	/**
+     * 获取Stream 类型
+     *
+     * @return bool
+     */
+
+	public function getStreamType()
+	{
+		return $this->type;
+	}
+
+	/**
+     * 关闭 Socket 连接
+     *
+     * @return bool
+     */
+
+	public function close() 
+	{	
+		if( !$this->socket ) fclose($this->socket);
+	}
+
+	/**
+     * 返回是否读取到结尾
+     *
+     * @return bool
+     */
+
+	public function eof()
+	{
+		return $this->eof;
+	}
+
+	/**
+     * 返回是否可读
+     *
+     * @return bool
+     */
+
+	public function isReadable()
+	{
+		return $this->read;
+	}
+
+	/**
+	 * 返回是否可写
+	 * 
+	 * @return bool
+	 */
+
+	public function isWriteable()
+	{
+		return $this->write;
+	}
 	
 	/**
-	 * timeout
+	 * 设置meta信息
+	 * @param $sock
 	 */
-
-	private $timeout;
-
-	/**
-	 * Socket Object
-	 */
-
-	private $socket = [];
-
-	/**
-	 * response Info
-	 */
-
-	private $context;
-
-
-	public function __construct( $config ){
-
-		if(empty($config['socket_path'])) throw new \Exception('No Setting Socket Path');
-
-		$socket_path  = str_replace( '\\' , '/', $config['socket_path']);
-
-		if( $config['type'] == 'unix' ){
-			$this->socket_path = 'unix:///'.trim( $socket_path,'/' );
-		}else if( $config['type'] == 'tcp' ){
-			$this->socket_path = 'tcp://'.trim( $socket_path,'/' ).'/';
-		}else{
-			throw new Exception("Socket Type Error", 401);
-		}
-
-		
-		$timeout = ini_get('default_socket_timeout');
-
-		if( !empty( $config['timeout']) ){
-			$timeout = $config['timeout'];
-		}
-
-		$this->timeout = $timeout;
-	}
-
-	public function connect()
+	
+	public function getMetaData($socket)
 	{
-		$this->socket = @stream_socket_client( $this->socket_path, $errno, $errstr, $this->timeout, STREAM_CLIENT_CONNECT );
-		
-		if( $errno != 0 ){
-			throw new \Exception('Socket Error Info:'.$errstr);
-		}
-
-		return $this;
+		$metaData = stream_get_meta_data($socket);
+		$this->read  = isset(self::$readWrite['read'][$metaData['mode']]);
+		$this->write = isset(self::$readWrite['write'][$metaData['mode']]);
+		$this->eof   = isset($metaData['eof']) && !$metaData['eof'] ? false : true;
+		$this->type  = $metaData['stream_type'];
 	}
+	
+	/**
+	 * 返回是否可写
+	 * 
+	 * @return bool
+	 */
 
-	public function writeStream( Request $request )
-	{
-		$stream_data = $request->getBody();
-		if( !$stream_data ) throw new Exception("Write Stream Empty", 400);
-
-		if( $this->write($this->socket,$stream_data) == false ){
-			throw new Exception("Write Stream Error", 400);
-		}
-	}
-
-	public function write( $socket,$stream_data )
+	public function parseConfig( $socketConfig )
 	{	
-		if( strlen($stream_data) == 0 ){
-			return false;
-		}
-
-		$result = @fwrite($socket, $stream_data);
-        if ($result !== 0) {
-            return $result;
-        }
-
-        $read = [];
-        $write = [$socket];
-        $except = [];
-
-        @stream_select($read, $write, $except, 0);
-        if (!$write) {
-            return 0;
-        }
-        
-        $result = @fwrite($socket, $stream_data);
-        if ($result !== 0) {
-            return $result;
-        }
-
-        return false;
-	}
-
-	public function read()
-	{
-		$meta_data = stream_get_meta_data($this->socket);
-		if( isset($meta_data['timeout']) && $meta_data['timeout'] ){
-			throw new Exception("Socket Read timeout", 1);
-			$this->close();
-		}
-		$this->context = stream_get_contents($this->socket);
-		$this->close();
-		return $this->context;
-	}
-
-	public function getContext()
-	{
-		return $this->context;
-	}
-
-	public function close()
-	{
-		if( $this->socket ){ 
-			fclose($this->socket);
+		foreach ( $this->config as $name => $value) {
+			if( isset($socketConfig[$name]) && !empty($socketConfig[$name]) ){
+				$this->config[$name] = $socketConfig[$name];
+			}
 		}
 	}
-
-
 }
