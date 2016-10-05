@@ -286,7 +286,7 @@ class Request implements RequestInterface
 	{	
 		$currentSocket = null;
 
-		$currentSocket = $socket->createSocket();
+		$currentSocket = $socket->getSocket();
 		
 		// 如果当前的 Socket 未空 
 		if( $currentSocket == null ) throw new \Exception("Socket Connect Error");
@@ -299,7 +299,7 @@ class Request implements RequestInterface
 			throw new \Exception("Socket Request Client Write Error");
 		}
 
-		return  $response->readResponse( $currentSocket );
+		return  $response->readResponse( $currentSocket,$socket );
 	}
 
 }

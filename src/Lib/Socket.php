@@ -47,7 +47,7 @@ class Socket implements SocketInterface
         ],
         'ssl' => null,
         'write_buffer_size' => 8192,
-        'ssl_method' => STREAM_CRYPTO_METHOD_TLS_CLIENT,
+        //'ssl_method' => 'STREAM_CRYPTO_METHOD_TLS_CLIENT',
 	];
 
 	/**
@@ -92,7 +92,7 @@ class Socket implements SocketInterface
 			throw new \Exception("Socket Type And Socket Remote is Null");
 		}
 
-		$separator = $socketConfig['stream_type'] == 'unix' ? 'unix:///' : 'tcp://';
+		$separator = $socketConfig['stream_type'] == 'unix' ? 'unix:///' : $socketConfig['stream_type'].'://';
 		$socketPath = $separator.trim($socketConfig['remote_socket'],'/');
 
 		$streamContext = [];
@@ -107,20 +107,26 @@ class Socket implements SocketInterface
         $errMsg = null;
         // 配置超时时间
         if( $socketConfig['timeout'] == null ) $timeout = ini_get('default_socket_timeout');
-        // 减少超时时间达到连接的作用
-        $socket = @stream_socket_client($socketPath, $errNo, $errMsg, $timeout / 1000, STREAM_CLIENT_CONNECT,stream_context_create($streamContext));
+        // 
+        $socket = @stream_socket_client($socketPath, $errNo, $errMsg, $timeout, STREAM_CLIENT_CONNECT,stream_context_create($streamContext));
 
 		if( false === $socket ) throw new \Exception($errMsg, $errNo);
 
 		if( $socketConfig['ssl'] ){
-			if (false === @stream_socket_enable_crypto($socket, true, $this->config['ssl_method'])) {
-				throw new \Exception("Set SSL Type Error");
-			}
+			// if (false === @stream_socket_enable_crypto($socket, true, $this->config['ssl_method'])) {
+			// 	throw new \Exception("Set SSL Type Error");
+			// }
 		}
 
 		$this->getMetaData($socket);
-
 		$this->socket = $socket;
+	}
+
+	public function getSocket(){
+		if( !is_resource($this->socket) || $this->socket == null ){
+			$this->createSocket();
+		}
+		return $this->socket;
 	}
 
 	/**
@@ -136,28 +142,6 @@ class Socket implements SocketInterface
 		}
 
 		$header = $request->getRequestHeader();
-	}
-
-	/**
-     * 读取数据
-     *
-     * @return bool
-     */
-
-	public function readResponse(ResponseInterface $response)
-	{
-
-	}
-
-	/**
-     * 获取数据内容
-     *
-     * @return bool
-     */
-
-	public function getContents()
-	{
-
 	}
 
 	/**

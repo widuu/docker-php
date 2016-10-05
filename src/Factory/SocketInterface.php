@@ -13,22 +13,6 @@ interface SocketInterface
 
 	public function writeReauest(RequestInterface $request);
 
-	/**
-     * 读取数据
-     *
-     * @return bool
-     */
-
-	public function readResponse(ResponseInterface $response);
-
-	/**
-     * 获取数据内容
-     *
-     * @return bool
-     */
-
-	public function getContents();
-
 
 	/**
      * 关闭 Socket 连接
@@ -36,7 +20,7 @@ interface SocketInterface
      * @return bool
      */
 
-	public function close($id);
+	public function close();
 
 	/**
      * 返回是否读取到结尾

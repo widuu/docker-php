@@ -45,7 +45,7 @@ class Response implements ResponseInterface
 	 * @return widuu\Docker\Factory\ResponseInterface
 	 */
 
-	public function readResponse( $currentSocket )
+	public function readResponse( $currentSocket,SocketInterface $socket )
 	{
 		if( !is_resource($currentSocket) ){
 			$this->close();
@@ -99,6 +99,8 @@ class Response implements ResponseInterface
 			list($name,$value)  = explode(':', $header);
 			$headerArray[$name] = $value;
 		},$headers);
+
+		$this->setHeader($headerArray);
 	}
 
 	/**
@@ -107,8 +109,9 @@ class Response implements ResponseInterface
 	 * @return int
 	 */
 
-	public function getStatusCode()
+	public function getStatusCode($flag=false)
 	{
+		if( $flag) $this->close();
 		return $this->statusCode;
 	}
 
@@ -198,14 +201,42 @@ class Response implements ResponseInterface
 	}
 
 	/**
-	 * 获取 Body 信息
-	 * 
-	 * @return
+	 * 获取Socket流信息
+	 *
+	 * @return  mix   NULL|Resource
 	 */
 
-	public function getBody()
+	public function getStream()
 	{
-		return $this->socket;
+		if( is_resource($this->socket) &&  $this->socket ){
+			return $this->socket;
+		}
+		return null;
+	}
+
+	/**
+	 * 获取 Body 信息
+	 * 
+	 * @return string
+	 */
+
+	public function getBody( $bufferSize = 4096 )
+	{
+		$contentLength = $this->getHeader('Content-Length');
+
+		if( intval($contentLength) > 0 ){
+			if( $contentLength < $bufferSize ) $bufferSize = $contentLength;
+		}
+
+		$content = "";
+
+		do{
+			$content .= fread($this->socket, $bufferSize);
+		}while ( !feof($this->socket) );
+
+		$this->close();
+
+		return $content;
 	}
 	
 	/**
@@ -219,8 +250,4 @@ class Response implements ResponseInterface
 		} 
 	}
 	
-	public function __destruct()
-	{
-		$this->close();
-	}	
 }
