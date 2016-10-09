@@ -8,8 +8,7 @@ use widuu\Docker\Lib\Request;
 class Container extends Module
 {
 
-
-	public function list( $params = [] )
+	public function list( $params=[] )
 	{
 		$query = new Query('/containers/json');
 		$query->setDefault('all', false);
